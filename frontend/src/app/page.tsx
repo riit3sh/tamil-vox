@@ -49,24 +49,26 @@ export default function Home() {
       </header>
 
       {/* ── HERO SECTION ── */}
-      <section className="relative w-full h-screen flex flex-col items-center justify-center">
+      <section className="relative w-full h-[100dvh] min-h-[750px] flex flex-col items-center justify-center pt-10 pb-32">
         
         {/* Center Orb */}
-        <div className="flex flex-col items-center gap-10 z-10 -mt-20">
-          <div className="text-xs uppercase tracking-[0.3em] text-white/30 font-mono text-center">
+        <div className="flex flex-col items-center justify-center z-10 w-full px-4 -mt-10">
+          <div className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/30 font-mono text-center mb-8">
             Experimental Speech Rendering System
           </div>
           
-          <Orb state={orbState} />
+          <div className="my-[-20px] md:my-[-40px]">
+            <Orb state={orbState} />
+          </div>
           
-          <div className="flex flex-col items-center gap-6 mt-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-extralight tracking-tight text-white/90">
+          <div className="flex flex-col items-center text-center mt-8 md:mt-12 w-full max-w-3xl">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extralight tracking-tight text-white/90 leading-tight">
               Tamil that sounds human.
             </h1>
-            <p className="text-lg text-white/40 font-light max-w-2xl mx-auto px-4">
+            <p className="text-sm md:text-lg text-white/40 font-light mt-4 px-2">
               Conversational rendering for emotionally believable Tamil speech synthesis.
             </p>
-            <div className="mt-4">
+            <div className="mt-8">
               <PipelineAnimation />
             </div>
           </div>

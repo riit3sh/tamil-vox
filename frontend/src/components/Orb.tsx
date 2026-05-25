@@ -68,11 +68,16 @@ void main() {
   vUv = uv;
   vNormal = normal;
   
-  // Create noise based displacement
-  float noise = snoise(vec3(position.x * 2.0, position.y * 2.0 + uTime * 0.5, position.z * 2.0));
+  // Layered noise for more aggressive craters and flames
+  float noise1 = snoise(vec3(position.x * 2.5, position.y * 2.5 + uTime * 0.8, position.z * 2.5));
+  float noise2 = snoise(vec3(position.x * 4.0 - uTime * 0.5, position.y * 4.0, position.z * 4.0 + uTime * 0.5));
   
-  // Apply amplitude multiplier for voice reaction
-  vec3 newPosition = position + normal * (noise * uAmplitude * 0.2);
+  float combinedNoise = (noise1 * 0.6) + (noise2 * 0.4);
+  
+  // Use abs() to create sharp outward flames, and normal noise for craters
+  float displacement = (combinedNoise > 0.0) ? (combinedNoise * combinedNoise) : combinedNoise;
+  
+  vec3 newPosition = position + normal * (displacement * uAmplitude);
   vPosition = newPosition;
   
   gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
@@ -156,11 +161,12 @@ void main() {
   // Map noise to colors
   float pulse = sin(uTime * 1.5) * 0.5 + 0.5;
   
-  // Inner dark core with glowing plasma streaks
-  vec3 innerPlasma = mix(uColorBase, uColorGlow, smoothstep(-0.2, 0.8, layeredNoise + pulse * 0.2));
+  // High contrast core: dark craters, bright plasma flames
+  vec3 innerPlasma = mix(uColorBase, uColorGlow, smoothstep(0.0, 0.6, layeredNoise + pulse * 0.2));
   
-  // Add volumetric opacity falloff at edges
-  float alpha = smoothstep(0.0, 0.4, fresnel) + 0.6;
+  // Make craters partially transparent, while flames and edges remain opaque
+  float alpha = smoothstep(-0.2, 0.8, layeredNoise) * 0.7 + fresnel * 0.6 + 0.2;
+  alpha = clamp(alpha, 0.0, 1.0);
   
   // Final mix with fresnel edge glow
   vec3 finalColor = mix(innerPlasma, uColorGlow, fresnel * uIntensity);
@@ -189,23 +195,23 @@ function OrbMesh({ state = 'idle' }: { state: 'idle' | 'listening' | 'speaking' 
       material.uniforms.uTime.value += delta;
       
       // Target values based on state
-      let targetAmplitude = 0.2;
+      let targetAmplitude = 0.6; // Increased base idle amplitude
       let targetIntensity = 2.0;
       
       if (state === 'listening') {
         // Generation pulse: faster rotation, stronger distortion
         mesh.current.rotation.y += delta * 0.5;
-        targetAmplitude = 0.5 + Math.sin(stateObj.clock.elapsedTime * 8) * 0.3;
+        targetAmplitude = 1.0 + Math.sin(stateObj.clock.elapsedTime * 8) * 0.4;
         targetIntensity = 2.5;
       } else if (state === 'speaking') {
         // Playback distortion: reactive energy surges
         mesh.current.rotation.y += delta * 0.2;
-        targetAmplitude = 0.6 + Math.sin(stateObj.clock.elapsedTime * 15) * 0.5;
+        targetAmplitude = 1.2 + Math.sin(stateObj.clock.elapsedTime * 15) * 0.6;
         targetIntensity = 3.5;
         material.uniforms.uColorGlow.value.lerp(new THREE.Color("#b53cff"), 0.08); // violet/pink
       } else {
-        // Idle breathing
-        targetAmplitude = 0.2 + Math.sin(stateObj.clock.elapsedTime * 2) * 0.05;
+        // Idle breathing - very cratery and alive
+        targetAmplitude = 0.6 + Math.sin(stateObj.clock.elapsedTime * 1.5) * 0.15;
         targetIntensity = 1.8;
         material.uniforms.uColorGlow.value.lerp(new THREE.Color("#00f0ff"), 0.05); // cyan
       }
