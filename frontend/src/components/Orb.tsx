@@ -68,16 +68,16 @@ void main() {
   vUv = uv;
   vNormal = normal;
   
-  // Layered noise for more aggressive craters and flames
-  float noise1 = snoise(vec3(position.x * 2.5, position.y * 2.5 + uTime * 0.8, position.z * 2.5));
-  float noise2 = snoise(vec3(position.x * 4.0 - uTime * 0.5, position.y * 4.0, position.z * 4.0 + uTime * 0.5));
+  // Layered noise with higher frequency for sparse, spread out features
+  float noise1 = snoise(vec3(position.x * 3.5, position.y * 3.5 + uTime * 0.8, position.z * 3.5));
+  float noise2 = snoise(vec3(position.x * 6.0 - uTime * 0.5, position.y * 6.0, position.z * 6.0 + uTime * 0.5));
   
   float combinedNoise = (noise1 * 0.6) + (noise2 * 0.4);
   
-  // Use abs() to create sharp outward flames, and normal noise for craters
-  float displacement = (combinedNoise > 0.0) ? (combinedNoise * combinedNoise) : combinedNoise;
+  // Sharp outward flames (positive noise) and inward craters (negative noise)
+  float displacement = combinedNoise * combinedNoise * sign(combinedNoise);
   
-  vec3 newPosition = position + normal * (displacement * uAmplitude);
+  vec3 newPosition = position + normal * (displacement * uAmplitude * 1.5);
   vPosition = newPosition;
   
   gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
@@ -153,23 +153,26 @@ void main() {
   fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
   fresnel = pow(fresnel, 2.5); // sharper edge
   
-  // Layered volumetric noise
-  float noise1 = snoise(vec3(vPosition.x * 1.5, vPosition.y * 1.5 + uTime * 0.4, vPosition.z * 1.5));
-  float noise2 = snoise(vec3(vPosition.x * 3.0 - uTime * 0.2, vPosition.y * 3.0, vPosition.z * 3.0 + uTime * 0.3));
-  float layeredNoise = (noise1 * 0.7) + (noise2 * 0.3);
+  // Layered volumetric noise (higher frequency for smaller patches)
+  float noise1 = snoise(vec3(vPosition.x * 3.5, vPosition.y * 3.5 + uTime * 0.4, vPosition.z * 3.5));
+  float noise2 = snoise(vec3(vPosition.x * 6.0 - uTime * 0.2, vPosition.y * 6.0, vPosition.z * 6.0 + uTime * 0.3));
+  float layeredNoise = (noise1 * 0.6) + (noise2 * 0.4);
   
   // Map noise to colors
   float pulse = sin(uTime * 1.5) * 0.5 + 0.5;
   
-  // High contrast core: dark craters, bright plasma flames
-  vec3 innerPlasma = mix(uColorBase, uColorGlow, smoothstep(0.0, 0.6, layeredNoise + pulse * 0.2));
+  // Isolate the peaks of the noise to create sparse dark craters
+  float craters = smoothstep(0.2, 0.7, layeredNoise);
   
-  // Make craters partially transparent, while flames and edges remain opaque
-  float alpha = smoothstep(-0.2, 0.8, layeredNoise) * 0.7 + fresnel * 0.6 + 0.2;
+  // Base is bright plasma, craters are dark
+  vec3 innerPlasma = mix(uColorGlow, uColorBase, craters + (pulse * 0.15));
+  
+  // Opacity: Plasma is mostly opaque, craters become highly transparent
+  float alpha = mix(0.95, 0.05, craters) + fresnel * 0.8;
   alpha = clamp(alpha, 0.0, 1.0);
   
   // Final mix with fresnel edge glow
-  vec3 finalColor = mix(innerPlasma, uColorGlow, fresnel * uIntensity);
+  vec3 finalColor = mix(innerPlasma, uColorGlow, fresnel * uIntensity * 1.2);
   
   gl_FragColor = vec4(finalColor, alpha);
 }
