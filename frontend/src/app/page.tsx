@@ -11,18 +11,35 @@ import { motion } from 'framer-motion';
 export default function Home() {
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'speaking'>('idle');
 
-  const handlePromptSubmit = (prompt: string) => {
+  const handlePromptSubmit = async (prompt: string) => {
     setOrbState('listening');
     
-    // Simulate API processing delay
-    setTimeout(() => {
-      setOrbState('speaking');
+    try {
+      const response = await fetch("http://localhost:8000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: prompt })
+      });
       
-      // Return to idle after "speaking"
-      setTimeout(() => {
+      const data = await response.json();
+      
+      if (data.audio_base64) {
+        const audio = new Audio(`data:audio/wav;base64,${data.audio_base64}`);
+        audio.onended = () => {
+          setOrbState('idle');
+        };
+        audio.play().catch(e => {
+          console.error("Audio playback failed:", e);
+          setOrbState('idle');
+        });
+        setOrbState('speaking');
+      } else {
         setOrbState('idle');
-      }, 4000);
-    }, 1500);
+      }
+    } catch (error) {
+      console.error("Failed to fetch from backend:", error);
+      setOrbState('idle');
+    }
   };
 
   return (

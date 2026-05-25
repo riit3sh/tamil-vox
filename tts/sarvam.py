@@ -105,6 +105,11 @@ class SarvamTTS:
         """Return raw WAV bytes for the given text."""
         return self._call_api(text, pace=pace)
 
+    def to_base64(self, text: str, pace: float = 1.0) -> str:
+        """Return base64 encoded string of the WAV bytes."""
+        audio_bytes = self._call_api(text, pace=pace)
+        return base64.b64encode(audio_bytes).decode("utf-8")
+
     def save(self, text: str, filepath: str, pace: float = 1.0) -> str:
         """Convert text to speech and save as WAV file. Returns filepath."""
         audio_bytes = self._call_api(text, pace=pace)
