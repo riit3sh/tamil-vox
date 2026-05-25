@@ -75,7 +75,7 @@ graph TD
     D --> E[Morphology Renderer]
     E --> F[Phonetic Tamil Script Translation]
     F --> G[Sarvam TTS Audio Streaming]
-    G --> H[Cinematic React Audio UI]
+    G --> H[Frontend]
 ```
 
 ### 1. Intent Detection
@@ -89,17 +89,6 @@ The `core/renderer.py` intercepts the Tanglish output. It normalizes grammar var
 
 ### 4. Streaming TTS via Sarvam
 The compiled hybrid text is sent to the Sarvam API (`bulbul:v3`). The exact pace is dynamically calculated from the emotional tag injected by the LLM. Audio is streamed back to the client as Base64 encoded WAV buffers.
-
----
-
-## 🖥️ Frontend Experience
-
-The frontend is a love letter to cinematic sci-fi interfaces. It isn't just a text box—it is a living artifact.
-
-* **Audio-Reactive Shader:** A custom WebGL fragment shader renders a fluid, dynamic plasma orb.
-* **State Topology:** The orb breathes during the `idle` state, pulls inward during the `listening` network phase, and violently flares in sync with the audio when `speaking`.
-* **Fresnel Rim Lighting:** World-space normal calculations ensure a beautiful, glowing edge-light regardless of how the geometry contorts.
-* **Dust Fade Typography:** Staggered cinematic Framer Motion typography materializes onto the screen like settling dust.
 
 ---
 
