@@ -1,6 +1,15 @@
 import re
 from typing import Tuple
 
+# ── 0. NORMALIZATION PATTERNS ─────────────────────────────────────────────────
+# Fix common LLM spelling variations of Tanglish before rendering
+NORMALIZATION_PATTERNS = [
+    (r'\biruku\b', 'irukku'),
+    (r'\bila\b', 'illa'),
+    (r'\bpanrein\b', 'panren'),
+    (r'\bpannuren\b', 'panren'),
+]
+
 # ── 1. PHRASE PATTERNS ────────────────────────────────────────────────────────
 # Context-heavy multi-word patterns. Priority over single words.
 PHRASE_PATTERNS = [
@@ -38,6 +47,13 @@ MORPHOLOGY_PATTERNS = [
     (r'\b([a-zA-Z]+) pannalam\b', r'\1 பண்ணலாம்', r'\1 பண்ணலாம்'),
     (r'\b([a-zA-Z]+) pannitu\b', r'\1 பண்ணிட்டு', r'\1 பண்ணிட்டு'),
     (r'\b([a-zA-Z]+) vechitu\b', r'\1 வச்சிட்டு', r'\1 வச்சிட்டு'),
+    (r'\b([a-zA-Z]+) panra\b', r'\1 பண்ற', r'\1 பண்ற'),
+    (r'\b([a-zA-Z]+) panren\b', r'\1 பண்றேன்', r'\1 பண்றேன்'),
+    (r'\b([a-zA-Z]+) pannala\b', r'\1 பண்ணல', r'\1 பண்ணல'),
+    (r'\b([a-zA-Z]+) vandhuruchu\b', r'\1 வந்துருச்சு', r'\1 வந்துருச்சு'),
+    (r'\b([a-zA-Z]+) poiruchu\b', r'\1 போயிருச்சு', r'\1 போயிருச்சு'),
+    (r'\b([a-zA-Z]+) irukka\b', r'\1 இருக்கா', r'\1 இருக்கா'),
+    (r'\b([a-zA-Z]+) illa\b', r'\1 இல்ல', r'\1 இல்ல'),
 ]
 
 # ── 2. WORD PATTERNS ─────────────────────────────────────────────────────────
@@ -166,6 +182,10 @@ def extract_emotion(text: str) -> Tuple[str, str]:
 
 def _apply_patterns(text: str, target: str) -> str:
     """Helper to apply phrase and word patterns for a target (display or tts)."""
+    # 0. Apply Normalization
+    for pattern, replacement in NORMALIZATION_PATTERNS:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+
     # 1. Apply phrases
     for pattern, display_rep, tts_rep in PHRASE_PATTERNS:
         replacement = display_rep if target == "display" else tts_rep
