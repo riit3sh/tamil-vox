@@ -69,8 +69,8 @@ void main() {
   vNormal = normal;
   
   // Layered noise for more aggressive craters and flames
-  float noise1 = snoise(vec3(position.x * 2.5, position.y * 2.5 + uTime * 0.8, position.z * 2.5));
-  float noise2 = snoise(vec3(position.x * 4.0 - uTime * 0.5, position.y * 4.0, position.z * 4.0 + uTime * 0.5));
+  float noise1 = snoise(vec3(position.x * 4.0, position.y * 4.0 + uTime * 0.8, position.z * 4.0));
+  float noise2 = snoise(vec3(position.x * 6.0 - uTime * 0.5, position.y * 6.0, position.z * 6.0 + uTime * 0.5));
   
   float combinedNoise = (noise1 * 0.6) + (noise2 * 0.4);
   
@@ -154,10 +154,10 @@ void main() {
   fresnel = pow(fresnel, 2.5); // sharper edge
   
   // Layered volumetric noise
-  // We use 2.5 and 4.0 to match the vertex shader so the patches are spread out
+  // We use 4.0 and 6.0 to match the vertex shader so the patches are spread all over the orb
   // The time multipliers are heavily reduced so the patches morph very slowly instead of disappearing
-  float noise1 = snoise(vec3(vPosition.x * 2.5, vPosition.y * 2.5 + uTime * 0.1, vPosition.z * 2.5));
-  float noise2 = snoise(vec3(vPosition.x * 4.0 - uTime * 0.05, vPosition.y * 4.0, vPosition.z * 4.0 + uTime * 0.1));
+  float noise1 = snoise(vec3(vPosition.x * 4.0, vPosition.y * 4.0 + uTime * 0.1, vPosition.z * 4.0));
+  float noise2 = snoise(vec3(vPosition.x * 6.0 - uTime * 0.05, vPosition.y * 6.0, vPosition.z * 6.0 + uTime * 0.1));
   float layeredNoise = (noise1 * 0.7) + (noise2 * 0.3);
   
   // Map noise to colors
