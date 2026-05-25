@@ -11,6 +11,7 @@ uniform float uAmplitude;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
+varying vec3 vWorldPosition;
 
 // Simple 3D noise function
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -66,7 +67,8 @@ float snoise(vec3 v) {
 
 void main() {
   vUv = uv;
-  vNormal = normal;
+  // Transform normal to world space for correct Fresnel during rotation
+  vNormal = normalize(normalMatrix * normal);
   
   // Layered noise for more aggressive craters and flames
   float noise1 = snoise(vec3(position.x * 4.0, position.y * 4.0 + uTime * 0.8, position.z * 4.0));
@@ -80,7 +82,11 @@ void main() {
   vec3 newPosition = position + normal * (displacement * uAmplitude);
   vPosition = newPosition;
   
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+  // Calculate world position for correct camera view direction
+  vec4 worldPos = modelMatrix * vec4(newPosition, 1.0);
+  vWorldPosition = worldPos.xyz;
+  
+  gl_Position = projectionMatrix * viewMatrix * worldPos;
 }
 `;
 
@@ -93,6 +99,7 @@ uniform float uIntensity;
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
+varying vec3 vWorldPosition;
 
 // Noise function duplicated for fragment volumetric effect
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -147,32 +154,78 @@ float snoise(vec3 v) {
 }
 
 void main() {
-  // Edge glow effect (Fresnel)
-  vec3 viewDirection = normalize(cameraPosition - vPosition);
+  // Edge glow effect (Fresnel) - now correctly using world space so rotation doesn't break it!
+  vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
   float fresnel = dot(viewDirection, vNormal);
   fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
-  fresnel = pow(fresnel, 2.5); // sharper edge
+  fresnel = pow(fresnel, 3.5); // sharper edge
   
   // Layered volumetric noise
   // We use 4.0 and 6.0 to match the vertex shader so the patches are spread all over the orb
   // The time multipliers are heavily reduced so the patches morph very slowly instead of disappearing
-  float noise1 = snoise(vec3(vPosition.x * 4.0, vPosition.y * 4.0 + uTime * 0.1, vPosition.z * 4.0));
-  float noise2 = snoise(vec3(vPosition.x * 6.0 - uTime * 0.05, vPosition.y * 6.0, vPosition.z * 6.0 + uTime * 0.1));
+  // STABLE SPHERE COORDS
+  vec3 sphereCoords = normalize(vPosition);
+
+  // Anchored crater topology
+  float noise1 = snoise(vec3(
+    sphereCoords.x * 4.0,
+    sphereCoords.y * 4.0 + uTime * 0.08,
+    sphereCoords.z * 4.0
+  ));
+
+  float noise2 = snoise(vec3(
+    sphereCoords.x * 7.0 - uTime * 0.04,
+    sphereCoords.y * 7.0,
+    sphereCoords.z * 7.0 + uTime * 0.08
+  ));
   float layeredNoise = (noise1 * 0.7) + (noise2 * 0.3);
   
-  // Map noise to colors
-  float pulse = sin(uTime * 1.5) * 0.5 + 0.5;
-  
-  // High contrast core: dark craters, bright plasma flames
-  vec3 innerPlasma = mix(uColorBase, uColorGlow, smoothstep(0.0, 0.6, layeredNoise + pulse * 0.2));
-  
-  // Make craters partially transparent, while flames and edges remain opaque
-  float alpha = smoothstep(-0.2, 0.8, layeredNoise) * 0.7 + fresnel * 0.6 + 0.2;
+  // Slow plasma pulse
+  float pulse = sin(uTime * 1.2) * 0.5 + 0.5;
+
+  // Sharpen crater/plasma separation
+  layeredNoise = pow(abs(layeredNoise), 1.4) * sign(layeredNoise);
+
+  // Plasma mask
+  float plasmaMask = smoothstep(
+    0.15,
+    0.75,
+    layeredNoise + pulse * 0.15
+  );
+
+  // Remove the dark voids completely and use dim plasma instead
+  vec3 craterColor = uColorGlow * 0.2;
+
+  // Bright plasma
+  vec3 plasmaColor = uColorGlow;
+
+  // Preserve dark regions permanently
+  vec3 innerPlasma = mix(
+    craterColor,
+    plasmaColor,
+    plasmaMask
+  );
+
+  // Edge glow ONLY at edges
+  vec3 edgeGlow = uColorGlow * fresnel * (uIntensity * 0.35);
+
+  // Subsurface energy leak
+  float subsurface = smoothstep(-0.4, 0.4, layeredNoise) * 0.15;
+
+  // Final color
+  vec3 finalColor =
+    innerPlasma +
+    edgeGlow +
+    (uColorGlow * subsurface);
+
+  // Better alpha preservation
+  float alpha =
+    smoothstep(-0.3, 0.7, layeredNoise) * 0.65 +
+    fresnel * 0.35 +
+    0.35;
+
   alpha = clamp(alpha, 0.0, 1.0);
-  
-  // Final mix with fresnel edge glow
-  vec3 finalColor = mix(innerPlasma, uColorGlow, fresnel * uIntensity);
-  
+
   gl_FragColor = vec4(finalColor, alpha);
 }
 `;
@@ -205,11 +258,17 @@ function OrbMesh({ state = 'idle' }: { state: 'idle' | 'listening' | 'speaking' 
         targetIntensity = 2.5;
       } else if (state === 'speaking') {
         // Playback distortion: reactive energy surges
-        mesh.current.rotation.y += delta * 1.0;
-        mesh.current.rotation.x += delta * 0.2;
-        targetAmplitude = 1.2 + Math.sin(stateObj.clock.elapsedTime * 15) * 0.6;
-        targetIntensity = 3.5;
-        material.uniforms.uColorGlow.value.lerp(new THREE.Color("#b53cff"), 0.08); // violet/pink
+        // NO rotational drift during speaking
+        mesh.current.rotation.y += delta * 0.02;
+        mesh.current.rotation.x += delta * 0.005;
+        targetAmplitude =
+          0.9 +
+          Math.sin(stateObj.clock.elapsedTime * 10) * 0.25;
+        targetIntensity = 2.0;
+        material.uniforms.uColorGlow.value.lerp(
+          new THREE.Color("#7a5cff"),
+          0.025
+        );
       } else {
         // Idle breathing - very cratery and alive, NO rotation so the patches stay where they are!
         targetAmplitude = 0.6 + Math.sin(stateObj.clock.elapsedTime * 1.5) * 0.15;
