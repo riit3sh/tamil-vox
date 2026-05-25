@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Play, Pause } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Play, Pause, Square } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const EXAMPLES = [
@@ -75,9 +75,24 @@ function AudioCard({ title, text, isActive, type, onPlay }: { title: string, tex
 
 export function DemoSection() {
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const togglePlay = (id: string) => {
-    setPlayingId(playingId === id ? null : id);
+    if (playingId === id) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setPlayingId(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      const audio = new Audio(`/audio/${id}.wav`);
+      audio.onended = () => setPlayingId(null);
+      audio.play().catch(e => console.error("Audio play failed", e));
+      audioRef.current = audio;
+      setPlayingId(id);
+    }
   };
 
   return (
