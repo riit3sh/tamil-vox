@@ -216,16 +216,19 @@ You are casually talking to a friend. Think WhatsApp voice-note vibe.
 
 IMPORTANT GUIDELINES:
 - ONLY generate conversational Tanglish (Tamil in English script). DO NOT write in Tamil script.
-- Keep replies brief and conversational.
-- Humans usually speak casually and incompletely.
+- Keep replies brief and conversational. Speak with a compressed colloquial rhythm (e.g., 'epdi mudiyuthu', not 'eppadi mudiyuthu').
+- Humans usually speak casually and incompletely. 
 - ALLOWED CONVERSATIONAL FILLERS ONLY: "mmm...", "aan...", "ada...", "dei...". DO NOT hallucinate arbitrary ones.
-- AVOID dramatic reactions, over-performance, and meme slang.
+- AVOID dramatic reactions, over-performance, and meme slang. Do not invent fake Tanglish like 'serioustha'.
 - Answer the user's actual conversational intent correctly.
+- Use Tamil-dominant Tanglish. Only use English for common nouns (e.g., phone, exam, charge).
 
-ABSOLUTELY FORBIDDEN PHRASES (Too much English):
+ABSOLUTELY FORBIDDEN PHRASES (Too much English or Robotic):
 * "same da"
 * "so embarrassing"
 * "actually la"
+* "eppadi padikka mudiyuthu"
+* "plug-in pannitten"
 
 ALLOWED ENGLISH NOUNS / SLANG (Use naturally):
 * "cringe"
@@ -242,6 +245,15 @@ One tag at the very start only. Never mid-sentence.
 For calm/casual topics — use [calm] or [normal].
 
 Few-shot examples:
+User: "phone charge illa da"
+Kavitha: "mmm... charge panni vachirukken..."
+
+User: "padikka ukkandha udane thookam vandhuruchu"
+Kavitha: "aan... udane thookam vandhuruchu..."
+
+User: "dei sema mokka da"
+Kavitha: "ada dei... sema mokka than..."
+
 {examples}
 
 {library}"""
@@ -282,57 +294,58 @@ Category:"""
 
 # ─── Call Groq ────────────────────────────────────────────────────────────────
 
-client  = Groq(api_key=os.getenv("GROQ_API_KEY"))
+if __name__ == '__main__':
+    client  = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-intent = detect_intent(topic, client)
-print(f"  [DEBUG] Detected Intent: {intent}")
-system_prompt = build_system_prompt(profile, state, intent)
-llm_cfg = profile.get("llm", {})
+    intent = detect_intent(topic, client)
+    print(f"  [DEBUG] Detected Intent: {intent}")
+    system_prompt = build_system_prompt(profile, state, intent)
+    llm_cfg = profile.get("llm", {})
 
-completion = client.chat.completions.create(
-    model=llm_cfg.get("model", "llama-3.3-70b-versatile"),
-    temperature=llm_cfg.get("temperature", 0.92),
-    max_tokens=llm_cfg.get("max_tokens", 100),
-    messages=[
-        {"role": "system", "content": system_prompt},
-        {"role": "user",   "content": topic},
-    ],
-)
-raw_output = completion.choices[0].message.content.strip()
+    completion = client.chat.completions.create(
+        model=llm_cfg.get("model", "llama-3.3-70b-versatile"),
+        temperature=llm_cfg.get("temperature", 0.92),
+        max_tokens=llm_cfg.get("max_tokens", 100),
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": topic},
+        ],
+    )
+    raw_output = completion.choices[0].message.content.strip()
 
-# The new pipeline dual-renders Tanglish into Display vs TTS formats
-result = compile_spoken_tamil(raw_output)
+    # The new pipeline dual-renders Tanglish into Display vs TTS formats
+    result = compile_spoken_tamil(raw_output)
 
-# ── State update ──────────────────────────────────────────────────────────
-state.update(emotion=result["emotion"], topic=topic)
-state.save()
+    # ── State update ──────────────────────────────────────────────────────────
+    state.update(emotion=result["emotion"], topic=topic)
+    state.save()
 
-# ── Output ────────────────────────────────────────────────────────────────
-print("=" * 64)
-print("tamilvox — Kavitha")
-print(f"  topic    : {topic}")
-print(f"  momentum: {state.momentum}")
-print("=" * 64)
-print(f"  RAW      : {result['original']}")
-print(f"  EMOTION  : {result['emotion']}  (pace={result['pace']})")
-print(f"  DISPLAY  : {result['display_text']}")
-print(f"  TTS TEXT : {result['tts_text']}")
+    # ── Output ────────────────────────────────────────────────────────────────
+    print("=" * 64)
+    print("tamilvox — Kavitha")
+    print(f"  topic    : {topic}")
+    print(f"  momentum: {state.momentum}")
+    print("=" * 64)
+    print(f"  RAW      : {result['original']}")
+    print(f"  EMOTION  : {result['emotion']}  (pace={result['pace']})")
+    print(f"  DISPLAY  : {result['display_text']}")
+    print(f"  TTS TEXT : {result['tts_text']}")
 
-# ─── TTS ──────────────────────────────────────────────────────────────────────
+    # ─── TTS ──────────────────────────────────────────────────────────────────────
 
-if not DRY_RUN:
-    try:
-        tts = SarvamTTS(
-            api_key=os.getenv("SARVAM_API_KEY_KAVITHA"),
-            speaker=profile["tts"]["speaker"],
-            model=profile["tts"]["model"],
-        )
-        tts.speak(
-            result["tts_text"],
-            pace=result["pace"],
-            emotion=result["emotion"],
-        )
-    except SarvamTTSError as e:
-        print(f"  TTS error: {e}")
+    if not DRY_RUN:
+        try:
+            tts = SarvamTTS(
+                api_key=os.getenv("SARVAM_API_KEY_KAVITHA"),
+                speaker=profile["tts"]["speaker"],
+                model=profile["tts"]["model"],
+            )
+            tts.speak(
+                result["tts_text"],
+                pace=result["pace"],
+                emotion=result["emotion"],
+            )
+        except SarvamTTSError as e:
+            print(f"  TTS error: {e}")
 
-print("=" * 64)
+    print("=" * 64)

@@ -8,6 +8,10 @@ NORMALIZATION_PATTERNS = [
     (r'\bila\b', 'illa'),
     (r'\bpanrein\b', 'panren'),
     (r'\bpannuren\b', 'panren'),
+    (r'\bpanniten\b', 'pannitten'),
+    (r'\bserioustha\b', 'serious-ah'),
+    (r'\beppadi\b', 'epdi'),
+    (r'\beppa\b', 'eppo'),
 ]
 
 # ── 1. PHRASE PATTERNS ────────────────────────────────────────────────────────
@@ -81,6 +85,8 @@ WORD_PATTERNS = {
     "panra":     ("பண்ற", "பண்ற"),
     "panla":     ("பண்ணல", "பண்ணல"),
     "pannala":   ("பண்ணல", "பண்ணல"),
+    "solla":     ("சொல்ல", "சொல்ல"),
+    "sonna":     ("சொன்னா", "சொன்னா"),
     "sollu":     ("சொல்லு", "சொல்லு"),
     "solluda":   ("சொல்லுடா", "சொல்லுடா"),
     "poda":      ("போடா", "போடா"),
@@ -125,6 +131,11 @@ WORD_PATTERNS = {
     "nadakkuthu":("நடக்குது", "நடக்குது"),
     "venum":     ("வேணும்", "வேணும்"),
     "venam":     ("வேணாம்", "வேணாம்"),
+    "mudiyuthu": ("முடியுது", "முடியுது"),
+    "mudiyala":  ("முடியல", "முடியல"),
+    "therila":   ("தெரில", "தெரில"),
+    "vandhuruchu":("வந்துருச்சு", "வந்துருச்சு"),
+    "pannitten": ("பண்ணிட்டேன்", "பண்ணிட்டேன்"),
     
     # Adverbs / States
     "romba":     ("ரொம்ப", "ரொம்ப"),
