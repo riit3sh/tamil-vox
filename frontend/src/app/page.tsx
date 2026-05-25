@@ -6,6 +6,7 @@ import { VoiceConsole } from '@/components/VoiceConsole';
 import { PipelineAnimation } from '@/components/PipelineAnimation';
 import { DemoSection } from '@/components/DemoSection';
 import { Github } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'speaking'>('idle');
@@ -62,15 +63,30 @@ export default function Home() {
           </div>
           
           <div className="flex flex-col items-center text-center mt-8 md:mt-12 w-full max-w-3xl">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-extralight tracking-tight text-white/90 leading-tight">
+            <motion.h1 
+              initial={{ opacity: 0, filter: 'blur(12px)', scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
+              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              className="text-3xl md:text-5xl lg:text-6xl font-extralight tracking-tight text-white/90 leading-tight"
+            >
               Tamil that sounds human.
-            </h1>
-            <p className="text-sm md:text-lg text-white/40 font-light mt-4 px-2">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, filter: 'blur(12px)', scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
+              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
+              className="text-sm md:text-lg text-white/40 font-light mt-4 px-2"
+            >
               Conversational rendering for emotionally believable Tamil speech synthesis.
-            </p>
-            <div className="mt-8">
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 1.0 }}
+              className="mt-8"
+            >
               <PipelineAnimation />
-            </div>
+            </motion.div>
           </div>
         </div>
 
