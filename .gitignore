@@ -1,0 +1,19 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables (secrets)
+.env
+
+# Python compilation files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# State files
+.kavitha_state.json
+
+# Logs
+*.log
