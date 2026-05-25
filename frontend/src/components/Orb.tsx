@@ -296,7 +296,7 @@ function OrbMesh({ state = 'idle' }: { state: 'idle' | 'listening' | 'speaking' 
 
 export function Orb({ state = 'idle', className = "" }: { state?: 'idle' | 'listening' | 'speaking', className?: string }) {
   return (
-    <div className={`relative w-[300px] h-[300px] md:w-[500px] md:h-[500px] ${className}`}>
+    <div className={`relative w-[280px] h-[280px] md:w-[380px] md:h-[380px] ${className}`}>
       {/* Outer ambient glow */}
       <div 
         className="absolute inset-0 rounded-full blur-[100px] opacity-40 transition-all duration-1000"

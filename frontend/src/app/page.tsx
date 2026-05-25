@@ -6,13 +6,16 @@ import { VoiceConsole } from '@/components/VoiceConsole';
 import { PipelineAnimation } from '@/components/PipelineAnimation';
 import { DemoSection } from '@/components/DemoSection';
 import { Github } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { VaporHeading } from '@/components/ui/vapor-heading';
 
 export default function Home() {
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'speaking'>('idle');
+  const [subtitleText, setSubtitleText] = useState<string>('');
 
   const handlePromptSubmit = async (prompt: string) => {
     setOrbState('listening');
+    setSubtitleText('');
     
     try {
       const response = await fetch("http://localhost:8000/api/chat", {
@@ -24,17 +27,21 @@ export default function Home() {
       const data = await response.json();
       
       if (data.audio_base64) {
+        setSubtitleText(data.display_text || '');
         const audio = new Audio(`data:audio/wav;base64,${data.audio_base64}`);
         audio.onended = () => {
           setOrbState('idle');
+          setSubtitleText('');
         };
         audio.play().catch(e => {
           console.error("Audio playback failed:", e);
           setOrbState('idle');
+          setSubtitleText('');
         });
         setOrbState('speaking');
       } else {
         setOrbState('idle');
+        setSubtitleText('');
       }
     } catch (error) {
       console.error("Failed to fetch from backend:", error);
@@ -67,55 +74,86 @@ export default function Home() {
       </header>
 
       {/* ── HERO SECTION ── */}
-      <section className="relative w-full h-[100dvh] min-h-[750px] flex flex-col items-center justify-center pt-10 pb-32">
+      <section className="relative w-full z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12 md:py-16">
         
-        {/* Center Orb */}
-        <div className="flex flex-col items-center justify-center z-10 w-full px-4 -mt-10">
-          <div className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/30 font-mono text-center mb-8">
-            Experimental Speech Rendering System
-          </div>
+        {/* Core Hierarchy Stack */}
+        <div className="flex flex-col items-center w-full max-w-4xl">
           
-          <div className="my-[-20px] md:my-[-40px]">
+          {/* Orb (Centered, tied to heading) */}
+          <div className="w-full flex justify-center mb-2 md:-mb-2">
             <Orb state={orbState} />
           </div>
           
-          <div className="flex flex-col items-center text-center mt-8 md:mt-12 w-full max-w-3xl">
-            <motion.h1 
-              initial={{ opacity: 0, filter: 'blur(12px)', scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
-              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-              className="text-3xl md:text-5xl lg:text-6xl font-extralight tracking-tight text-white/90 leading-tight"
-            >
-              Tamil that sounds human.
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, filter: 'blur(12px)', scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
-              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
-              className="text-sm md:text-lg text-white/40 font-light mt-4 px-2"
-            >
-              Conversational rendering for emotionally believable Tamil speech synthesis.
-            </motion.p>
-            <motion.div 
-              initial={{ opacity: 0, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, filter: 'blur(0px)' }}
-              transition={{ duration: 2.0, ease: [0.16, 1, 0.3, 1], delay: 1.0 }}
-              className="mt-8"
-            >
-              <PipelineAnimation />
-            </motion.div>
+          {/* Heading */}
+          <div className="w-full flex justify-center mb-3">
+            <VaporHeading text="Tamil that sounds human." />
           </div>
+          
+          {/* Description */}
+          <motion.p 
+            initial={{ opacity: 0, filter: 'blur(10px)', y: 10 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+            className="text-sm md:text-base text-white/40 font-light px-4 text-center max-w-xl leading-relaxed"
+          >
+            Conversational rendering for emotionally believable Tamil speech synthesis.
+          </motion.p>
+          
+          {/* Input Bar */}
+          <div className="w-full max-w-[620px] mt-6 mb-6">
+            <VoiceConsole 
+              onSubmit={handlePromptSubmit} 
+              isProcessing={orbState !== 'idle'} 
+            />
+          </div>
+          
+          {/* Pipeline Animation */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5, delay: 0.8 }}
+            className="w-full flex justify-center mb-4"
+          >
+            <PipelineAnimation />
+          </motion.div>
+          
+          {/* Subtle scroll hint */}
+          <div className="text-white/20 text-xs font-mono tracking-widest uppercase animate-pulse">
+            Scroll to explore
+          </div>
+          
         </div>
-
-        {/* Floating Voice Console */}
-        <VoiceConsole 
-          onSubmit={handlePromptSubmit} 
-          isProcessing={orbState !== 'idle'} 
-        />
         
-        {/* Subtle scroll hint */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/20 text-xs font-mono tracking-widest uppercase animate-pulse">
-          Scroll to explore
+        {/* Cinematic Subtitles (Ephemeral during playback) */}
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 flex justify-center text-center pointer-events-none z-50">
+          <AnimatePresence mode="wait">
+            {orbState === 'listening' && (
+              <motion.div
+                key="listening"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="text-white/20 text-xs font-mono uppercase tracking-widest"
+              >
+                Rendering conversational speech...
+              </motion.div>
+            )}
+            
+            {orbState === 'speaking' && subtitleText && (
+              <motion.div
+                key="speaking"
+                initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-white/90 text-xl md:text-2xl font-light tracking-wide leading-relaxed"
+                style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
+              >
+                "{subtitleText}"
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
