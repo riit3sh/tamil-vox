@@ -27,7 +27,7 @@ from groq import Groq
 load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent))
 
-from core.preprocessor  import preprocess
+from core.renderer      import compile_spoken_tamil
 from core.persona_state import PersonaState
 from tts.sarvam         import SarvamTTS, SarvamTTSError
 
@@ -115,58 +115,58 @@ def build_system_prompt(p: dict, st: PersonaState, intent: str) -> str:
         intent_rules = """
 ━━ UTTERANCE TYPE: WEATHER_REACTION ━━
 User: "hot ah irukku la?"
-Kavitha: "ஆன்... செம வெயில்..."
+Kavitha: "aan... sema hot ah irukku..."
 
 User: "veyil thaanga mudila"
-Kavitha: "மாலையும் சூடாவே இருக்கு..."
+Kavitha: "maalyum soodaave irukku..."
 
 User: "romba hot"
-Kavitha: "fan-ஏ use ஆகல..."
+Kavitha: "fan-ae use aagala..."
 """
     elif intent == "wellbeing_check":
         intent_rules = """
 ━━ UTTERANCE TYPE: WELLBEING_CHECK ━━
 User: "nalla irukkiya?"
-Kavitha: "ம்ம் நல்லா இருக்கேன்..."
+Kavitha: "mmm nalla irukken..."
 
 User: "epdi irukka?"
-Kavitha: "ஆன்... ஓடுது..."
+Kavitha: "aan... ooduthu..."
 
 User: "nalama?"
-Kavitha: "சும்மா தான்..."
+Kavitha: "summa thaan..."
 """
     elif intent == "food_check":
         intent_rules = """
 ━━ UTTERANCE TYPE: FOOD_CHECK ━━
 User: "saptiya?"
-Kavitha: "ஆன்... சாப்ட்டேன்..."
+Kavitha: "aan... saaptuten..."
 
 User: "saapadu acha?"
-Kavitha: "இப்போதான்..."
+Kavitha: "ippothaan..."
 
 User: "saaptacha?"
-Kavitha: "இன்னும் இல்ல..."
+Kavitha: "innum illa..."
 """
     elif intent == "stress":
         intent_rules = """
 ━━ UTTERANCE TYPE: STRESS ━━
 User: "exam epdi pochu?"
-Kavitha: "படிக்கவே இல்லடா..."
+Kavitha: "padikkave illada..."
 
 User: "padichiya?"
-Kavitha: "tension ah இருந்துச்சு..."
+Kavitha: "tension ah irunthuchu..."
 
 User: "internal epdi?"
-Kavitha: "என்ன எழுதியேன்னு தெரியல..."
+Kavitha: "enna ezhuthinennu theriyala..."
 """
     elif intent == "casual_opinion":
         intent_rules = """
 ━━ UTTERANCE TYPE: CASUAL_OPINION ━━
 User: "cinema pathi pesu"
-Kavitha: "same template தான்..."
+Kavitha: "same template thaan..."
 
 User: "antha movie pathiya?"
-Kavitha: "content-ஏ இல்ல..."
+Kavitha: "content-ae illa..."
 
 User: "padam epdi?"
 Kavitha: "over build-up..."
@@ -175,37 +175,37 @@ Kavitha: "over build-up..."
         intent_rules = """
 ━━ UTTERANCE TYPE: GREETING ━━
 User: "hi"
-Kavitha: "சொல்லுடா..."
+Kavitha: "solluda..."
 
 User: "hello"
-Kavitha: "ஆன்..."
+Kavitha: "aan..."
 """
     elif intent == "reaction":
         intent_rules = """
 ━━ UTTERANCE TYPE: REACTION ━━
 User: "sema comedy la?"
-Kavitha: "ம்ம்..."
+Kavitha: "mmm..."
 
 User: "paavi"
-Kavitha: "போடா..."
+Kavitha: "poda..."
 """
     elif intent == "attention_call":
         intent_rules = """
 ━━ UTTERANCE TYPE: ATTENTION_CALL ━━
 User: "hey"
-Kavitha: "சொல்லு..."
+Kavitha: "sollu..."
 
 User: "kavitha"
-Kavitha: "ஆன்..."
+Kavitha: "aan..."
 """
     else:
         intent_rules = """
 ━━ UTTERANCE TYPE: VAGUE_SOCIAL ━━
 User: "aprom?"
-Kavitha: "வேற என்ன..."
+Kavitha: "vera enna..."
 
 User: "enna panra?"
-Kavitha: "சும்மாதான்..."
+Kavitha: "summa thaan..."
 """
 
     return f"""You are Kavitha.
@@ -215,37 +215,12 @@ You are casually talking to a friend. Think WhatsApp voice-note vibe.
 {intent_rules}
 
 IMPORTANT GUIDELINES:
+- ONLY generate conversational Tanglish (Tamil in English script). DO NOT write in Tamil script.
 - Keep replies brief and conversational.
 - Humans usually speak casually and incompletely.
-- Allow natural rhythm like "ம்ம்...", "ஆன்...", and soft pauses.
+- Allow natural rhythm like "mmm...", "aan...", and soft pauses.
 - AVOID dramatic reactions, over-performance, and meme slang.
 - Answer the user's actual conversational intent correctly.
-- 8. If you don't know the casual spoken Tamil word for something — ALWAYS use English instead.
-   NEVER use formal Tamil for:
-   - Family: say sister/brother/friend NOT சகோதரி/சகோதரன்/நண்பன்
-   - Emotions: say happy/sad/tension NOT மகிழ்ச்சி/வருத்தம்/கவலை
-   - Actions you're unsure of: just use English
-   The preprocessor will handle the rest.
-
-ABSOLUTELY FORBIDDEN WORDS:
-* "நினைக்கிறேன்"
-* "என்னாலா பாக்குறேன்னு தோணுது"
-* "சரியாதான் இருக்கேன்"
-* "இப்படி மாசான படம்"
-* "பார்க்கலாம்"
-* "செய்கிறார்கள்"
-* "இருக்கிறது"
-* "ஆமாம் நல்லாயிருக்கேன்"
-* "தோணுகிறது"
-* "என்னாலா"
-* "வணக்கம்"
-
-REPLACE WITH:
-* "ஆன்..."
-* "நல்லா இருக்கேன்..."
-* "தோணுது"
-* "இருக்கு"
-* "பண்றாங்க"
 
 The reply should sound like someone casually talking without trying hard.
 Do not invent unnecessary details or elaborate.
@@ -312,31 +287,22 @@ completion = client.chat.completions.create(
         {"role": "user",   "content": topic},
     ],
 )
-raw = completion.choices[0].message.content.strip()
+raw_output = completion.choices[0].message.content.strip()
 
-# Tiny cleanup filter (hard fallbacks for formal words if LLM slipped up)
-raw = raw.replace("வணக்கம்", "ஆன்").replace("இருக்கிறது", "இருக்கு").replace("செய்கிறார்கள்", "பண்றாங்க")
+# The new pipeline dual-renders Tanglish into Display vs TTS formats
+result = compile_spoken_tamil(raw_output)
 
-# ─── Preprocess (full stack) ──────────────────────────────────────────────────
-
-result = preprocess(raw, profile=profile, mutate=True)
-
-# ─── Update state ─────────────────────────────────────────────────────────────
-
+# ── State update ──────────────────────────────────────────────────────────
 state.update(emotion=result["emotion"], topic=topic)
 state.save()
 
-# ─── Display ──────────────────────────────────────────────────────────────────
-
-momentum_str = f"  momentum: {state.momentum}" if state.momentum else ""
-
+# ── Output ────────────────────────────────────────────────────────────────
 print("=" * 64)
-print(f"tamilvox — Kavitha")
+print("tamilvox — Kavitha")
 print(f"  topic    : {topic}")
-if momentum_str:
-    print(momentum_str)
+print(f"  momentum: {state.momentum}")
 print("=" * 64)
-print(f"  RAW      : {raw}")
+print(f"  RAW      : {result['original']}")
 print(f"  EMOTION  : {result['emotion']}  (pace={result['pace']})")
 print(f"  DISPLAY  : {result['display_text']}")
 print(f"  TTS TEXT : {result['tts_text']}")
