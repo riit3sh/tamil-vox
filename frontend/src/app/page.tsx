@@ -99,12 +99,44 @@ export default function Home() {
             Conversational rendering for emotionally believable Tamil speech synthesis.
           </motion.p>
           
-          {/* Input Bar */}
-          <div className="w-full max-w-[620px] mt-6 mb-6">
+          {/* Input Bar & Absolute Subtitles */}
+          <div className="relative w-full max-w-[620px] mt-10 mb-6">
             <VoiceConsole 
               onSubmit={handlePromptSubmit} 
               isProcessing={orbState !== 'idle'} 
             />
+            
+            {/* Cinematic Subtitles (Ephemeral, Absolute) */}
+            <div className="absolute top-full left-0 w-full mt-2 flex justify-center text-center pointer-events-none z-50">
+              <AnimatePresence mode="wait">
+                {orbState === 'listening' && (
+                  <motion.div
+                    key="listening"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1 }}
+                    className="text-white/20 text-[10px] font-mono uppercase tracking-widest"
+                  >
+                    Rendering conversational speech...
+                  </motion.div>
+                )}
+                
+                {orbState === 'speaking' && subtitleText && (
+                  <motion.div
+                    key="speaking"
+                    initial={{ opacity: 0, y: 4, filter: 'blur(4px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
+                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="text-white/90 text-sm md:text-base font-light tracking-wide leading-relaxed px-4"
+                    style={{ textShadow: "0 0 15px rgba(255,255,255,0.2)" }}
+                  >
+                    "{subtitleText}"
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
           
           {/* Pipeline Animation */}
@@ -124,37 +156,6 @@ export default function Home() {
           
         </div>
         
-        {/* Cinematic Subtitles (Ephemeral during playback) */}
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 flex justify-center text-center pointer-events-none z-50">
-          <AnimatePresence mode="wait">
-            {orbState === 'listening' && (
-              <motion.div
-                key="listening"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1 }}
-                className="text-white/20 text-xs font-mono uppercase tracking-widest"
-              >
-                Rendering conversational speech...
-              </motion.div>
-            )}
-            
-            {orbState === 'speaking' && subtitleText && (
-              <motion.div
-                key="speaking"
-                initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="text-white/90 text-xl md:text-2xl font-light tracking-wide leading-relaxed"
-                style={{ textShadow: "0 0 20px rgba(255,255,255,0.2)" }}
-              >
-                "{subtitleText}"
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </section>
 
       {/* ── DEMO SECTION ── */}
