@@ -21,7 +21,7 @@ export function VoiceConsole({ onSubmit, isProcessing }: VoiceConsoleProps) {
   };
 
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-lg z-50">
+    <div className="relative w-full z-50">
       <motion.form 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

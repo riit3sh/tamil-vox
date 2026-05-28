@@ -1,7 +1,7 @@
 <div align="center">
 
-# Tamilvox 
-### Conversational Tamil Rendering Pipeline
+# Tamilvox: The Spoken Tamil Compiler
+### Tamil that actually sounds human.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -9,15 +9,17 @@
 [![Three.js](https://img.shields.io/badge/WebGL-Three.js-white.svg?logo=three.js&logoColor=black)](https://threejs.org/)
 [![Sarvam AI](https://img.shields.io/badge/TTS-Sarvam_AI-FF6B6B.svg)](https://sarvam.ai/)
 
-*Tamil that sounds human.*
+<br/>
+
+[![Watch the Demo](https://img.youtube.com/vi/Y6GuYX8JHe0/maxresdefault.jpg)](https://youtu.be/Y6GuYX8JHe0)
 
 </div>
 
 <br/>
 
-**Tamilvox is a cinematic conversational speech rendering system that transforms raw Tanglish input into emotionally believable Tamil speech.** 
+**Most Tamil AI sounds robotic because it defaults to formal *Senthamizh*. Tamilvox is a middleware rendering pipeline that fixes this.**
 
-It is not a chatbot. It is a **spoken Tamil rendering architecture** designed to bridge the uncanny valley between formal text generation and how humans actually speak in the real world.
+It intercepts raw Tanglish input, applies morphological compression (turning rigid words like *"pannukiren"* into spoken *"panren"*), and dynamically adjusts pacing based on emotion to generate undeniably human conversational speech.
 
 ---
 

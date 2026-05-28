@@ -75,18 +75,22 @@ class PersonaState:
 
     emotion_history: list[str] = field(default_factory=list)
     topic_history:   list[str] = field(default_factory=list)
+    response_history: list[str] = field(default_factory=list)
     _state_file:     Path      = field(default=Path(".kavitha_state.json"),
                                        repr=False, compare=False)
 
     # ── Mutation ──────────────────────────────────────────────────────────────
 
-    def update(self, emotion: str, topic: str) -> None:
+    def update(self, emotion: str, topic: str, response: str = "") -> None:
         """Record a completed turn."""
         self.emotion_history.append(emotion)
         self.topic_history.append(topic)
+        if response:
+            self.response_history.append(response)
         # Keep only the last 10 turns to avoid bloat
         self.emotion_history = self.emotion_history[-10:]
         self.topic_history   = self.topic_history[-10:]
+        self.response_history = self.response_history[-10:]
 
     # ── Read-only properties ──────────────────────────────────────────────────
 
@@ -129,6 +133,7 @@ class PersonaState:
         payload = {
             "emotion_history": self.emotion_history,
             "topic_history":   self.topic_history,
+            "response_history": self.response_history,
         }
         try:
             self._state_file.write_text(
@@ -148,6 +153,7 @@ class PersonaState:
                 return cls(
                     emotion_history=raw.get("emotion_history", []),
                     topic_history=raw.get("topic_history", []),
+                    response_history=raw.get("response_history", []),
                     _state_file=path,
                 )
             except (json.JSONDecodeError, KeyError):

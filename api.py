@@ -1,12 +1,18 @@
 import os
 import json
 import base64
+import sys
+import io
 from pathlib import Path
 from dotenv import load_dotenv
 from groq import Groq
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Force stdout/stderr to use UTF-8 to prevent charmap codec errors on Windows
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -201,27 +207,40 @@ async def chat_endpoint(request: ChatRequest):
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     topic = request.topic
 
+    # Load state dynamically on each request to prevent session/sync caching issues
+    current_state = PersonaState.load(state_file)
+
     # Pipeline logic
     intent = detect_intent(topic, client)
-    system_prompt = build_system_prompt(profile, state, intent)
+    system_prompt = build_system_prompt(profile, current_state, intent)
     llm_cfg = profile.get("llm", {})
+
+    # Construct conversation history (last 4 turns)
+    messages = [{"role": "system", "content": system_prompt}]
+    history_turns = 4
+    hist_topics = current_state.topic_history[-history_turns:]
+    hist_responses = current_state.response_history[-history_turns:]
+
+    for t, r in zip(hist_topics, hist_responses):
+        messages.append({"role": "user", "content": t})
+        messages.append({"role": "assistant", "content": r})
+
+    # Append current topic
+    messages.append({"role": "user", "content": topic})
 
     completion = client.chat.completions.create(
         model=llm_cfg.get("model", "llama-3.3-70b-versatile"),
         temperature=llm_cfg.get("temperature", 0.92),
         max_tokens=llm_cfg.get("max_tokens", 100),
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": topic},
-        ],
+        messages=messages,
     )
     raw_output = completion.choices[0].message.content.strip()
 
     result = compile_spoken_tamil(raw_output)
 
     # State update
-    state.update(emotion=result["emotion"], topic=topic)
-    state.save()
+    current_state.update(emotion=result["emotion"], topic=topic, response=raw_output)
+    current_state.save()
 
     # Get TTS Audio Base64
     try:
