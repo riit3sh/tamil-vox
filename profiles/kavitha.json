@@ -16,7 +16,7 @@
 
   "llm": {
     "model": "llama-3.3-70b-versatile",
-    "temperature": 0.92,
+    "temperature": 0.75,
     "max_tokens": 150
   },
 
@@ -39,36 +39,5 @@
     ]
   },
 
-  "slang_file": "data/kavitha_slang.txt",
-
-  "few_shot_examples": [
-    {
-      "topic": "how are you",
-      "response": "mmm... nalla irukken..."
-    },
-    {
-      "topic": "your name",
-      "response": "Kavitha..."
-    },
-    {
-      "topic": "cinema",
-      "response": "same template thaan..."
-    },
-    {
-      "topic": "bad movie",
-      "response": "content-ae illa..."
-    },
-    {
-      "topic": "exam",
-      "response": "padikkave illa..."
-    },
-    {
-      "topic": "stress",
-      "response": "tension ah irukku..."
-    },
-    {
-      "topic": "life",
-      "response": "summa ooduthu..."
-    }
-  ]
+  "slang_file": "data/kavitha_slang.txt"
 }
